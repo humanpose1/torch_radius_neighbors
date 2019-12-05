@@ -23,21 +23,6 @@ at::Tensor radius_search(at::Tensor query,
 	long* neighbors_indices_ptr = neighbors_indices.data();
 	at::Tensor out = torch::from_blob(neighbors_indices_ptr, {queries_stl.size(), max_count}, options=options);
 
-	// for(int i=0; i < 10; i++){
-	// 	std::cerr << neighbors_indices[i] << std::endl;
-	// 	std::cerr << out[i] << std::endl;
-	// }
-	// int max_count = 17;
-
-	// at::Tensor out = torch::zeros({queries_stl.size(), max_count}, at::kInt);
-
-	// for(int i=0; i < out.size(0); i++){
-	// 	for(int j=0; j < out.size(1); j++){
-	// 		out[i][j] = neighbors_indices[max_count*i + j];
-	//  		//out[i][j] = 0;
-	// 	}
-	// }
-
 	return out.clone();
 }
 using namespace pybind11::literals;
