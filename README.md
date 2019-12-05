@@ -9,12 +9,12 @@ python setup.py build
 ```
 
 Then in the build directory $PROJECT_PATH/build/lib.linux-x86_64-3.7 There is the .so file that you can import.
-```
+```python
 import neighbors
 a = torch.randn(100000, 3) # only 3d is supported
 res = neighbors.radius_search(a, a, 0.1, -1)
 ```
-for more informations
-```
+for more information
+```python
 help(neighbors.radius_search)
 ```
