@@ -1,9 +1,9 @@
 # torch_neighbors
-small python code to compute radius nearest neighbors on 3d point cloud using nanoflann and torch library.
+small python code to compute radius nearest neighbors on 3d point cloud using nanoflann and  c++ Pytorch library.
 
 ## How to install
 - You need to install pytorch (using pip or conda)
-- execute
+- execute:
 ```
 python setup.py build
 ```
@@ -18,6 +18,3 @@ for more informations
 ```
 help(neighbors.radius_search)
 ```
-
-
-
