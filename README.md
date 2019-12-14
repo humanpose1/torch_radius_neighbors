@@ -3,12 +3,12 @@ small python code to compute radius nearest neighbors on 3d point cloud using na
 
 ## How to install
 - You need to install pytorch (using pip or conda)
-- execute:
-```
-python setup.py build
-```
+- execute (It is better to create a virtual environment before executing this command):
 
-Then in the build directory $PROJECT_PATH/build/lib.linux-x86_64-3.7 There is the .so file that you can import.
+```
+python setup.py install
+```
+then on a python script
 ```python
 import neighbors
 a = torch.randn(100000, 3) # only 3d is supported
