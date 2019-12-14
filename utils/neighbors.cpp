@@ -211,7 +211,7 @@ void batch_ordered_neighbors(vector<PointXYZ>& queries,
 }
 
 int nanoflann_neighbors(vector<PointXYZ>& queries, vector<PointXYZ>& supports,
-			vector<long>& neighbors_indices, float radius, int max_num){
+			vector<long>& neighbors_indices, float radius, int max_num, int mode){
 
 	// Initiate variables
 	// ******************
@@ -265,26 +265,54 @@ int nanoflann_neighbors(vector<PointXYZ>& queries, vector<PointXYZ>& supports,
 		list_matches[i0] = ret_matches;
 		if(max_count < nMatches) max_count = nMatches;
 		i0++;
+
     }
     // Reserve the memory
     if(max_num > 0) {
 	    max_count = max_num;
     }
-    neighbors_indices.resize(queries.size() * max_count);
-    i0 = 0;
-    for (auto& inds : list_matches)
-	{
-		for (int j = 0; j < max_count; j++)
-		{
-			if (j < inds.size())
-				neighbors_indices[i0 * max_count + j] = inds[j].first;
-			else
-				neighbors_indices[i0 * max_count + j] = -1;
-		}
-		i0++;
-	}
+    if(mode == 0){
 
-	return max_count;
+	    neighbors_indices.resize(queries.size() * max_count);
+
+	    i0 = 0;
+
+	    for (auto& inds : list_matches){
+		    for (int j = 0; j < max_count; j++){
+			    if (j < inds.size())
+				    neighbors_indices[i0 * max_count + j] = inds[j].first;
+			    else
+				    neighbors_indices[i0 * max_count + j] = -1;
+		    }
+		    i0++;
+	    }
+
+    }
+    else if(mode == 1){
+	    int size = 0; // total number of edges
+	    for (auto& inds : list_matches){
+		    if(inds.size() <= max_count)
+			    size += inds.size();
+		    else
+			    size += max_count;
+	    }
+	    neighbors_indices.resize(size*2);
+	    int i0 = 0; // index of the query points
+	    int u = 0; // curent index of the neighbors_indices
+	    for (auto& inds : list_matches){
+		    for (int j = 0; j < max_count; j++){
+			    if(j < inds.size()){
+				    neighbors_indices[u] = i0;
+				    neighbors_indices[u + 1] = inds[j].first;
+				    u += 2;
+			    }
+		    }
+		    i0++;
+	    }
+
+
+    }
+    return max_count;
 
 
 

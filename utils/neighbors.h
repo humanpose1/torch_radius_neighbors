@@ -15,7 +15,7 @@ void ordered_neighbors(vector<PointXYZ>& queries,
                         float radius);
 
 int nanoflann_neighbors(vector<PointXYZ>& queries, vector<PointXYZ>& supports,
-			vector<long>& neighbors_indices, float radius, int max_num);
+			vector<long>& neighbors_indices, float radius, int max_num, int mode);
 
 void batch_ordered_neighbors(vector<PointXYZ>& queries,
                                 vector<PointXYZ>& supports,
