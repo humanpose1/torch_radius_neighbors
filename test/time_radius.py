@@ -29,6 +29,7 @@ if __name__ == "__main__":
 
     plt.plot(list_size, list_time_nanoflann, 'bo', label='with nanoflann')
     plt.plot(list_size, list_time_scipy, 'ro', label='with scipy')
+    plt.title("time of execution for simple radius neighbors")
     plt.xlabel("size of the point cloud")
     plt.ylabel("time of execution")
     plt.legend()
