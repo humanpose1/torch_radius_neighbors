@@ -7,15 +7,22 @@
 #include <iostream>
 
 
-at::Tensor radius_search(at::Tensor query,
+std::pair<at::Tensor, at::Tensor> radius_search(at::Tensor query,
 			 at::Tensor support,
 			 float radius, int max_num=-1, int mode=0){
 
 	at::Tensor out;
+	at::Tensor out_dists;
 	std::vector<long> neighbors_indices;
+
 	auto options = torch::TensorOptions().dtype(torch::kLong).device(torch::kCPU);
+	auto options_dist = torch::TensorOptions().dtype(torch::kFloat32).device(torch::kCPU);
 	int max_count = 0;
+
+	std::vector<float> neighbors_dists;
+
 	AT_DISPATCH_ALL_TYPES(query.scalar_type(), "radius_search", [&] {
+
 
 	auto data_q = query.DATA_PTR<scalar_t>();
 	auto data_s = support.DATA_PTR<scalar_t>();
@@ -24,17 +31,32 @@ at::Tensor radius_search(at::Tensor query,
 	std::vector<scalar_t> supports_stl = std::vector<scalar_t>(data_s,
 								   data_s + support.size(0)*support.size(1));
 
-	max_count = nanoflann_neighbors<scalar_t>(queries_stl, supports_stl ,neighbors_indices, radius, max_num, mode);
-
+	max_count = nanoflann_neighbors<scalar_t>(queries_stl,
+						  supports_stl,
+						  neighbors_indices,
+						  neighbors_dists,
+						  radius,
+						  max_num,
+						  mode);
 	});
 
+	auto neighbors_dists_ptr = neighbors_dists.data();
 	long* neighbors_indices_ptr = neighbors_indices.data();
-	if(mode == 0)
+	if(mode == 0){
 		out = torch::from_blob(neighbors_indices_ptr, {query.size(0), max_count}, options=options);
-	else if(mode ==1)
-		out = torch::from_blob(neighbors_indices_ptr, {(int)neighbors_indices.size()/2, 2}, options=options);
+		out_dists = torch::from_blob(neighbors_dists_ptr,
+	 				     {query.size(0), max_count},
+	 				     options=options_dist);
 
-	return out.clone();
+	}
+	else if(mode ==1){
+		out = torch::from_blob(neighbors_indices_ptr, {(int)neighbors_indices.size()/2, 2}, options=options);
+		out_dists = torch::from_blob(neighbors_dists_ptr,
+					     {(int)neighbors_indices.size()/2, 1},
+					     options=options_dist);
+	}
+
+	return std::make_pair(out.clone(), out_dists.clone());
 }
 
 void cumsum(const vector<long>& batch, vector<long>& res){
@@ -55,14 +77,15 @@ void cumsum(const vector<long>& batch, vector<long>& res){
 	res[ind-batch[0]] = incr;
 }
 
-at::Tensor batch_radius_search(at::Tensor query,
-			       at::Tensor support,
-			       at::Tensor query_batch,
-			       at::Tensor support_batch,
+std::pair<at::Tensor, at::Tensor> batch_radius_search(at::Tensor query,
+						      at::Tensor support,
+						      at::Tensor query_batch,
+						      at::Tensor support_batch,
 			       float radius, int max_num=-1, int mode=0) {
 	at::Tensor out;
-	auto data_qb = query_batch.data_ptr<long>();
-	auto data_sb = support_batch.data_ptr<long>();
+	at::Tensor out_dists;
+	auto data_qb = query_batch.DATA_PTR<long>();
+	auto data_sb = support_batch.DATA_PTR<long>();
 	std::vector<long> query_batch_stl = std::vector<long>(data_qb, data_qb+query_batch.size(0));
 	std::vector<long> cumsum_query_batch_stl;
 	cumsum(query_batch_stl, cumsum_query_batch_stl);
@@ -70,32 +93,47 @@ at::Tensor batch_radius_search(at::Tensor query,
 	std::vector<long> cumsum_support_batch_stl;
 	cumsum(support_batch_stl, cumsum_support_batch_stl);
 	std::vector<long> neighbors_indices;
+
 	auto options = torch::TensorOptions().dtype(torch::kLong).device(torch::kCPU);
+	auto options_dist = torch::TensorOptions().dtype(torch::kFloat32).device(torch::kCPU);
 	int max_count = 0;
+	std::vector<float> neighbors_dists;
 	AT_DISPATCH_ALL_TYPES(query.scalar_type(), "batch_radius_search", [&] {
-	auto data_q = query.data_ptr<scalar_t>();
-	auto data_s = support.data_ptr<scalar_t>();
+
+	auto data_q = query.DATA_PTR<scalar_t>();
+	auto data_s = support.DATA_PTR<scalar_t>();
 	std::vector<scalar_t> queries_stl = std::vector<scalar_t>(data_q,
 								  data_q + query.size(0)*query.size(1));
 	std::vector<scalar_t> supports_stl = std::vector<scalar_t>(data_s,
 								   data_s + support.size(0)*support.size(1));
+
 	max_count = batch_nanoflann_neighbors<scalar_t>(queries_stl,
-							    supports_stl,
-							    cumsum_query_batch_stl,
-							    cumsum_support_batch_stl,
-							    neighbors_indices,
-							    radius,
-							    max_num,
-							    mode);
+							supports_stl,
+							cumsum_query_batch_stl,
+							cumsum_support_batch_stl,
+							neighbors_indices,
+							neighbors_dists,
+							radius,
+							max_num,
+							mode);
 	});
 	long* neighbors_indices_ptr = neighbors_indices.data();
+	auto neighbors_dists_ptr = neighbors_dists.data();
 
 
-	if(mode == 0)
+	if(mode == 0){
 		out = torch::from_blob(neighbors_indices_ptr, {query.size(0), max_count}, options=options);
-	else if(mode == 1)
+		out_dists = torch::from_blob(neighbors_dists_ptr,
+	 				     {query.size(0), max_count},
+	 				     options=options_dist);
+	}
+	else if(mode == 1){
 		out = torch::from_blob(neighbors_indices_ptr, {(int)neighbors_indices.size()/2, 2}, options=options);
-	return out.clone();
+		out_dists = torch::from_blob(neighbors_dists_ptr,
+					     {(int)neighbors_indices.size()/2, 1},
+					     options=options_dist);
+	}
+	return std::make_pair(out.clone(), out_dists.clone());
 }
 using namespace pybind11::literals;
 PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {
@@ -109,7 +147,7 @@ PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {
 	      " - mode : int number that indicate which format for the neighborhood"
 	      " mode=0 mean a matrix of neighbors(-1 for shadow neighbors)"
 	      "mode=1 means a matrix of edges of size Num_edge x 2"
-	      "return a tensor of size N1 x M where M is either max_num or the maximum number of neighbors found if mode = 0, if mode=1 return a tensor of size Num_edge x 2.",
+	      "return a tensor of size N1 x M where M is either max_num or the maximum number of neighbors found if mode = 0, if mode=1 return a tensor of size Num_edge x 2 and return a tensor containing the squared distance of the neighbors",
 	      "query"_a, "support"_a, "radius"_a, "max_num"_a=-1, "mode"_a=0);
 	m.def("batch_radius_search",
 	      &batch_radius_search,
@@ -125,6 +163,6 @@ PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {
 		"- mode : int number that indicate which format for the neighborhood"
 		"mode=0 mean a matrix of neighbors(N2 for shadow neighbors)"
 		"mode=1 means a matrix of edges of size Num_edge x 2"
-	      "return a tensor of size N1 x M where M is either max_num or the maximum number of neighbors found if mode = 0, if mode=1 return a tensor of size Num_edge x 2.",
+	      "return a tensor of size N1 x M where M is either max_num or the maximum number of neighbors found if mode = 0, if mode=1 return a tensor of size Num_edge x 2 and return a tensor containing the squared distance of the neighbors",
 	      "query"_a, "support"_a, "query_batch"_a, "support_batch"_a, "radius"_a, "max_num"_a=-1, "mode"_a=0);
 }
