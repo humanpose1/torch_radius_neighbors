@@ -19,7 +19,7 @@ int nanoflann_neighbors(vector<scalar_t>& queries, vector<scalar_t>& supports,
 
 	// Counting vector
 	int max_count = 1;
-	float d2;
+
 
 	// Nanoflann related variables
 	// ***************************
@@ -61,7 +61,7 @@ int nanoflann_neighbors(vector<scalar_t>& queries, vector<scalar_t>& supports,
 
 		const size_t nMatches = index->radiusSearch(&query_pt[0], search_radius, ret_matches, search_params);
 		list_matches[i0] = ret_matches;
-		if(max_count < nMatches) max_count = nMatches;
+		if((size_t)max_count < nMatches) max_count = nMatches;
 		i0++;
 
 
@@ -90,7 +90,7 @@ int nanoflann_neighbors(vector<scalar_t>& queries, vector<scalar_t>& supports,
 	else if(mode == 1){
 		int size = 0; // total number of edges
 		for (auto& inds : list_matches){
-			if(inds.size() <= max_count)
+			if((int)inds.size() <= max_count)
 				size += inds.size();
 			else
 				size += max_count;
@@ -137,7 +137,6 @@ int batch_nanoflann_neighbors (vector<scalar_t>& queries,
 
 	// Counting vector
 	int max_count = 0;
-	float d2;
 
 
 	// batch index
@@ -194,7 +193,7 @@ int batch_nanoflann_neighbors (vector<scalar_t>& queries,
 		size_t nMatches = index->radiusSearch(query_pt, r2, all_inds_dists[i0], search_params);
 // Update max count
 
-		if (nMatches > max_count)
+		if (nMatches > (size_t)max_count)
 			max_count = nMatches;
 // Increment query idx
 		i0++;
@@ -234,7 +233,7 @@ int batch_nanoflann_neighbors (vector<scalar_t>& queries,
 	else if(mode == 1){
 		int size = 0; // total number of edges
 		for (auto& inds_dists : all_inds_dists){
-			if(inds_dists.size() <= max_count)
+			if((int)inds_dists.size() <= max_count)
 				size += inds_dists.size();
 			else
 				size += max_count;

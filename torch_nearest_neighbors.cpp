@@ -1,6 +1,7 @@
 
 #include <torch/extension.h>
 #include <ATen/ATen.h>
+#include "utils/compat.h"
 #include "utils/neighbors.h"
 #include "utils/neighbors.cpp"
 #include <iostream>
@@ -16,8 +17,8 @@ at::Tensor radius_search(at::Tensor query,
 	int max_count = 0;
 	AT_DISPATCH_ALL_TYPES(query.scalar_type(), "radius_search", [&] {
 
-	auto data_q = query.data_ptr<scalar_t>();
-	auto data_s = support.data_ptr<scalar_t>();
+	auto data_q = query.DATA_PTR<scalar_t>();
+	auto data_s = support.DATA_PTR<scalar_t>();
 	std::vector<scalar_t> queries_stl = std::vector<scalar_t>(data_q,
 								   data_q + query.size(0)*query.size(1));
 	std::vector<scalar_t> supports_stl = std::vector<scalar_t>(data_s,
@@ -31,7 +32,7 @@ at::Tensor radius_search(at::Tensor query,
 	if(mode == 0)
 		out = torch::from_blob(neighbors_indices_ptr, {query.size(0), max_count}, options=options);
 	else if(mode ==1)
-		out = torch::from_blob(neighbors_indices_ptr, {neighbors_indices.size()/2, 2}, options=options);
+		out = torch::from_blob(neighbors_indices_ptr, {(int)neighbors_indices.size()/2, 2}, options=options);
 
 	return out.clone();
 }
@@ -93,7 +94,7 @@ at::Tensor batch_radius_search(at::Tensor query,
 	if(mode == 0)
 		out = torch::from_blob(neighbors_indices_ptr, {query.size(0), max_count}, options=options);
 	else if(mode == 1)
-		out = torch::from_blob(neighbors_indices_ptr, {neighbors_indices.size()/2, 2}, options=options);
+		out = torch::from_blob(neighbors_indices_ptr, {(int)neighbors_indices.size()/2, 2}, options=options);
 	return out.clone();
 }
 using namespace pybind11::literals;
