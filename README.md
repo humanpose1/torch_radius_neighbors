@@ -12,7 +12,7 @@ then on a python script
 ```python
 import neighbors
 a = torch.randn(100000, 3) # only 3d is supported
-res = neighbors.radius_search(a, a, 0.1, -1)
+ind_neigh, dist_neigh = neighbors.radius_search(a, a, 0.1, -1)
 ```
 for more information
 ```python
