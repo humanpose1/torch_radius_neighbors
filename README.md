@@ -10,9 +10,10 @@ python setup.py install
 ```
 then on a python script
 ```python
-import neighbors
+import torch
+import torch_radius_search as radius
 a = torch.randn(100000, 3) # only 3d is supported
-ind_neigh, dist_neigh = neighbors.radius_search(a, a, 0.1, -1)
+ind_neigh, dist_neigh = radius.radius_search(a, a, 0.1, -1)
 ```
 for more information
 ```python
