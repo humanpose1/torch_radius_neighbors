@@ -1,6 +1,5 @@
 
 #include <torch/extension.h>
-#include <ATen/ATen.h>
 #include "utils/compat.h"
 #include "utils/neighbors.h"
 #include "utils/neighbors.cpp"
