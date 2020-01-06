@@ -1,6 +1,6 @@
 from setuptools import setup, Extension, find_packages
 import glob
-impoer torch
+import torch
 from torch.utils import cpp_extension
 
 TORCH_MAJOR = int(torch.__version__.split('.')[0])
