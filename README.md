@@ -17,5 +17,5 @@ ind_neigh, dist_neigh = radius.radius_search(a, a, 0.1, -1)
 ```
 for more information
 ```python
-help(neighbors.radius_search)
+help(radius.radius_search)
 ```
